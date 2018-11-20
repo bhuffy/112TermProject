@@ -97,12 +97,11 @@ def findSynonyms(word, words):
     synonyms = set()
     for syn in wordnet.synsets(word):
         for l in syn.lemmas():
-            if l.name() in words:
-                synonyms.add(l.name())
+            synonyms.add(l.name())
     return synonyms
 
 # Adds the frequency of each word and its synonyms to the word
-def addWordFrequency(text, synDict):
+def addWordFrequency(document, synDict):
     for word in synDict:
         count = 0
         for synonym in synDict[word]:
@@ -112,7 +111,7 @@ def addWordFrequency(text, synDict):
 #Give the number of times each word and it's synonyms appear in a text
 def getSimDictionary(documents, words):
     synDict = createSynDictionary(words)
-    addWordFrequency(text, synDict)
+    addWordFrequency(documents[5], synDict)
     return synDict
     
 ## Clustering for labels
@@ -140,11 +139,11 @@ def findKMeans(documents):
     print("\n")
     print("Prediction")
     
-    Y = vectorizer.transform(["chrome browser to open."])
+    Y = vectorizer.transform(["College is great, please apply and come to Lawrence!."])
     prediction = model.predict(Y)
     print(prediction)
     
-    Y = vectorizer.transform(["My cat is hungry."])
+    Y = vectorizer.transform(["Bennett, congratulations on something, please visit us. We can do something amazing."])
     prediction = model.predict(Y)
     print(prediction)
 
@@ -187,8 +186,8 @@ def analyze():
     
     # similar words in dictionary
     documents = getEmailBodyList(emails)
-    similarityDict = getSimDictionary(documents, words)
-    print(similarityDict)
+    # similarityDict = getSimDictionary(documents, words)
+    # print(similarityDict)
     
     # clustering
     findKMeans(documents)

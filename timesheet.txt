@@ -8,19 +8,20 @@ TIMESHEET
 - Learning NLTK/Scikit Learn (Classifications)
 - Created part of design proposal document for TP1
 
-11/19/18: 10 hours
+11/19/18: 12 hours
 - Creating Tkinter UI and basic frames
 - Started general sentiment analysis (up to feature sets)
 - Started working with CSVs to pull emails
 - Created list of positive and negative words to train algorithm
-- Finished design proposal...?
+- Finished design proposal & storyboard
+
+11/20/18: 5 hours
+- Implemented start of basic k-means for labeling
+- Integrated part of sentiment analysis into main project
+- 
 
 NEED TO DO FOR TP1:
 - Basic UI **DONE**
 - input folder **DONE**
 - Classify emails (label)
 - graph labels by their number of emails
-
-
-11/20/18: TBD
-- 
