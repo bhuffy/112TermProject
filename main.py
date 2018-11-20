@@ -50,10 +50,17 @@ def clickedUploadButton(data, x, y):
             return True
     return False
     
-# data.width/2-90, data.height*11/12-30, data.width/2+90, data.height*11/12+30
+# checks if user clicks within bounds of back to start button
 def clickedBTSButton(data, x, y):
     if (x > data.width/2-90 and x < data.width/2+90 and
         y > data.height*11/12-30 and y < data.height*11/12+30):
+            return True
+    return False
+
+# checks if user clicks within bounds of help button
+def clickedHelpButton(data, x, y):
+    if (x > data.width-60 and x < data.width and
+        y > 0 and y < 40):
             return True
     return False
 
@@ -98,6 +105,8 @@ def startScreenMousePressed(event, data):
     y = event.y
     if clickedStartButton(data, x, y):
         data.mode = "loadDataScreen"
+    elif clickedHelpButton(data, x, y):
+        data.mode = "helpScreen"
 
 def startScreenKeyPressed(event, data):
     pass
@@ -112,6 +121,10 @@ def startScreenRedrawAll(canvas, data):
                        text="WELCOME TO CLASS-E!", font="Arial 48 bold", fill=WHITE)
     canvas.create_text(data.width/2, data.height/3+40,
                        text="An email labeling and analysis tool for company complaints.", font="Arial 18 bold", fill=WHITE)
+    
+    # help button
+    canvas.create_text(data.width-30, 20,
+                       text="HELP", font="Arial 16 bold", fill=WHITE)
     
     # start button
     canvas.create_rectangle(data.width/2-75, data.height*2/3-30, data.width/2+75, data.height*2/3+30, fill=DARKBLUE, outline="")
@@ -131,6 +144,8 @@ def loadDataScreenMousePressed(event, data):
         print(data.filename)
     elif clickedContinueButton(data, x,y):
         data.mode = "labelScreen"
+    elif clickedHelpButton(data, x, y):
+        data.mode = "helpScreen"
 
 def loadDataScreenKeyPressed(event, data):
     pass
@@ -145,6 +160,10 @@ def loadDataScreenRedrawAll(canvas, data):
                             data.width-data.margin, data.height-data.margin-75, outline=WHITE, dash=(5, 10), fill=MAINBLUE)
     canvas.create_text(data.width/2, data.height/12,
                        text="Drag and drop or press 'upload' to upload your csv of emails.", font="Arial 18 bold", fill=WHITE)
+    
+    # help button
+    canvas.create_text(data.width-30, 20,
+                       text="HELP", font="Arial 16 bold", fill=WHITE)
     
     # upload button
     canvas.create_rectangle(data.width/2-75, data.height/2-30, data.width/2+75, data.height/2+30, fill=DARKBLUE, outline="")
@@ -163,6 +182,8 @@ def labelScreenMousePressed(event, data):
     y = event.y
     if clickedContinueButton(data, x, y):
         data.mode = "featuresScreen"
+    elif clickedHelpButton(data, x, y):
+        data.mode = "helpScreen"
 
 def labelScreenKeyPressed(event, data):
     pass
@@ -176,6 +197,10 @@ def labelScreenRedrawAll(canvas, data):
     canvas.create_text(data.width/2, data.height/12,
                        text="Do you have any pre-determined labels?", font="Arial 18 bold", fill=WHITE)
     
+    # help button
+    canvas.create_text(data.width-30, 20,
+                       text="HELP", font="Arial 16 bold", fill=WHITE)
+    
     # continue button
     canvas.create_rectangle(data.width/2-85, data.height*11/12-30, data.width/2+85, data.height*11/12+30, fill=DARKBLUE, outline="")
     canvas.create_text(data.width/2, data.height*11/12,
@@ -188,7 +213,9 @@ def featuresScreenMousePressed(event, data):
     y = event.y
     if clickedContinueButton(data, x, y):
         data.mode = "analyzeScreen"
-        # import loaddata as ld # will need this 
+        import loaddata as ld # will need this 
+    elif clickedHelpButton(data, x, y):
+        data.mode = "helpScreen"
 
 def featuresScreenKeyPressed(event, data):
     pass
@@ -202,6 +229,10 @@ def featuresScreenRedrawAll(canvas, data):
     canvas.create_text(data.width/2, data.height/12,
                        text="Which features do you want to view?", font="Arial 18 bold", fill=WHITE)
     
+    # help button
+    canvas.create_text(data.width-30, 20,
+                       text="HELP", font="Arial 16 bold", fill=WHITE)
+    
     # continue button
     canvas.create_rectangle(data.width/2-85, data.height*11/12-30, data.width/2+85, data.height*11/12+30, fill=DARKBLUE, outline="")
     canvas.create_text(data.width/2, data.height*11/12,
@@ -214,6 +245,8 @@ def analyzeScreenMousePressed(event, data):
     y = event.y
     if clickedBTSButton(data, x, y):
         data.mode = "startScreen"
+    elif clickedHelpButton(data, x, y):
+        data.mode = "helpScreen"
 
 def analyzeScreenKeyPressed(event, data):
     pass
@@ -223,11 +256,15 @@ def analyzeScreenTimerFired(data):
 
 def analyzeScreenRedrawAll(canvas, data):
     # draws background and instructions
-    canvas.create_rectangle(0,0,data.width,data.height, fill=WHITE, outline="")
+    canvas.create_rectangle(0,0,data.width,data.height, fill=MAINBLUE, outline="")
     canvas.create_text(data.width/2, data.height/2-20,
-                       text="Data here!", font="Arial 24 bold")
+                       text="Data here!", font="Arial 24 bold", fill=WHITE)
     canvas.create_text(data.width/2, data.height/2+20,
-                       text="oh what fun!", font="Arial 18")
+                       text="oh what fun!", font="Arial 18", fill=WHITE)
+    
+    # help button
+    canvas.create_text(data.width-30, 20,
+                       text="HELP", font="Arial 16 bold", fill=WHITE)
     
     # back to start button
     canvas.create_rectangle(data.width/2-90, data.height*11/12-30, data.width/2+90, data.height*11/12+30, fill=DARKBLUE, outline="")
@@ -238,7 +275,10 @@ def analyzeScreenRedrawAll(canvas, data):
 ## helpScreen mode
 
 def helpScreenMousePressed(event, data):
-    pass
+    x = event.x
+    y = event.y
+    if clickedBTSButton(data, x, y):
+        data.mode = "startScreen"
 
 def helpScreenKeyPressed(event, data):
     pass
@@ -247,14 +287,13 @@ def helpScreenTimerFired(data):
     pass
 
 def helpScreenRedrawAll(canvas, data):
+    canvas.create_rectangle(0,0,data.width,data.height, fill=MAINBLUE, outline="")
     canvas.create_text(data.width/2, data.height/2-40,
-                       text="This is help mode!", font="Arial 26 bold")
-    canvas.create_text(data.width/2, data.height/2-10,
-                       text="How to play:", font="Arial 20")
-    canvas.create_text(data.width/2, data.height/2+15,
-                       text="Do nothing and score points!", font="Arial 20")
-    canvas.create_text(data.width/2, data.height/2+40,
-                       text="Press any key to keep playing!", font="Arial 20")
+                       text="How to Use Class-E", font="Arial 26 bold")
+    # back to start button
+    canvas.create_rectangle(data.width/2-90, data.height*11/12-30, data.width/2+90, data.height*11/12+30, fill=DARKBLUE, outline="")
+    canvas.create_text(data.width/2, data.height*11/12,
+                       text="BACK", font="Arial 18", fill=WHITE)
 
 ## Run Function
 
