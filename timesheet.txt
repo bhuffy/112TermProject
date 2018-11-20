@@ -1,0 +1,26 @@
+TIMESHEET
+===================================
+
+11/17/18: 4 hours
+- Learning NLTK (basics, filtering, synsets, chunking)
+
+11/18/18: 8 hours
+- Learning NLTK/Scikit Learn (Classifications)
+- Created part of design proposal document for TP1
+
+11/19/18: 10 hours
+- Creating Tkinter UI and basic frames
+- Started general sentiment analysis (up to feature sets)
+- Started working with CSVs to pull emails
+- Created list of positive and negative words to train algorithm
+- Finished design proposal...?
+
+NEED TO DO FOR TP1:
+- Basic UI **DONE**
+- input folder **DONE**
+- Classify emails (label)
+- graph labels by their number of emails
+
+
+11/20/18: TBD
+- 

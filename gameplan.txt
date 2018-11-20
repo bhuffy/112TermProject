@@ -1,0 +1,24 @@
+
+- Create user interface that allows user to upload a csv file of emails
+- Create list of email objects out of that csv file
+
+- Create 
+
+- Create training data and testing data somehow
+- Pass csv path to loaddata.py
+
+
+
+
+
+
+Questions for TA:
+- Is it reasonable to try converting a .mbox file to CSV manually for TP3?
+- Should I store emails under a class? Does that make more sense than a panda dataframe?
+- Does it make sense to ask for already labeled data in different CSV export as a feature? Does that defeat the point? Just curious how I should go about getting training data.
+- I'm mostly interested in taking data without any pre-determined labels and clustering them
+- Would it be reasonable to give any suggestions on filters by finding commonalities in the data for different emails in the same cluster?
+
+- To gauge sentiment analysis take lists of good words and bad words found online
+- For labels, make them more general—use synonyms to link together as many emails as possible. You can always make it more specific.
+- To load data, import 'load data' inside a function so it won't run on anything until the person has uploaded their file.
