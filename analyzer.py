@@ -1,4 +1,4 @@
-## Project: Email Text Analyzer Tool: Load Data File
+## Project: Email Text Analyzer Tool: Analyzer
 
 """
 Author: Bennett Huffman
@@ -9,7 +9,7 @@ Section: H
 
 ## IMPORTS
 
-# general imports
+# general imports for handling csv files
 import csv
 import pandas
 import enchant
@@ -20,13 +20,16 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.corpus import wordnet, stopwords
 import string
 
-# clustering imports
+# k-means imports
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 
+# network diagram
+import networkx as nx
 
-## Classes
+
+## Email Pre-Processing & Word Filtering
 
 class Email(object):
     def __init__(self, data):
@@ -46,7 +49,6 @@ def createEmailList(path):
     # creates dictonary from values in each line of CSV
     with open(path, mode='r') as csv_file:
         csv_reader = csv.DictReader(csv_file)
-        start = True
         for row in csv_reader:
             emails.append(Email(row))
     return emails
@@ -114,7 +116,7 @@ def getSimDictionary(documents, words):
     addWordFrequency(documents[5], synDict)
     return synDict
     
-## Clustering for labels
+## Clustering
 
 def findKMeans(documents):
     # vectorize text
@@ -158,8 +160,14 @@ def findKMeans(documents):
 
 ## Sentiment Analysis
 
-def plotFrequencyDist(words):
-    words.plot(30,cumulative=False)
+def plotFrequencyDist(wordDist):
+    wordDist.plot(30,cumulative=False)
+    
+def plotConnectionDist(words):
+    df = pandas.DataFrame({ 'from':['A', 'B', 'C','A'], 'to':['D', 'A', 'E','C']})
+    # G=nx.from_pandas_dataframe(df, 'from', 'to')
+    # nx.draw(G, with_labels=True)
+    # plt.show()
 
 # Get each word and for each of them, create a dictionary whether the top 1000 words are in the document
 def findFeatures(email):
@@ -169,17 +177,32 @@ def findFeatures(email):
         features[w] = (w in words) # creates true/false if word in document mapping to list of features
     return features
 
-def analyze():
+def analyze(filename, features):
+    results = []
     # get emails from csv and filter them
-    emails = createEmailList('data/emails.csv')
+    emails = createEmailList(filename)
     allWords = getAllWords(emails)
     words = filterWords(allWords)
     
-    # frequency distribution
+    #frequency distribution
     wordDist = nltk.FreqDist(words) # makes object mapping most to least common words in key/value pair
-    print(wordDist.most_common(15)) # prints 15 most common words
-    plotFrequencyDist(wordDist)
     
+    if features['labels'][0]:
+        generateLabels()
+    if features['freqdist'][0]:
+    # frequency distribution
+        wordDist.most_common(15)
+        plotFrequencyDist(wordDist)
+        plotConnectionDist(wordDist)
+    if features['netdiagram'][0]:
+        drawNetworkDiagram(canvas, data)
+    if features['summary'][0]:
+        drawSummarization(canvas, data)
+    if features['sentiment'][0]:
+        drawSentimentAnalysis(canvas, data)
+    if features['exportCSV'][0]:
+        drawExportCSVButton(canvas, data)
+        
     # get top 1000 words
     wordFeatures = list(wordDist.keys())[:1000] # gets the top 1000 words
     print(wordFeatures)
@@ -200,4 +223,15 @@ def analyze():
 # for row in df.iterrows():
 #     print(row[1])
 
-analyze()
+
+## Run Analyzer
+features = {
+    'labels': [False, "#f5f5f5"],
+    'freqdist': [False, "#f5f5f5"],
+    'netdiagram': [False, "#f5f5f5"],
+    'summary': [False, "#f5f5f5"],
+    'sentiment': [False, "#f5f5f5"],
+    'exportCSV': [False, "#f5f5f5"]
+}
+
+analyze('data/emails.csv', features)

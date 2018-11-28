@@ -68,9 +68,6 @@
 # 
 # plt.show()
 
-
-## Testing text clustering
-
 ## Clustering
 
 from sklearn.feature_extraction.text import TfidfVectorizer

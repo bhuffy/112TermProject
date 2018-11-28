@@ -24,8 +24,6 @@ from sklearn.naive_bayes import MultinomialNB, GaussianNB, BernoulliNB
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.svm import SVC, LinearSVC, NuSVC
 
-import loaddata as ld
-
 ## Text Classifier (i.e. spam or not spam
 
 shortPositive = codecs.open("practice/reviews/positive.txt","r", encoding='latin2').read()

@@ -18,10 +18,15 @@ TIMESHEET
 11/20/18: 5 hours
 - Implemented start of basic k-means for labeling
 - Integrated part of sentiment analysis into main project
-- 
 
-NEED TO DO FOR TP1:
-- Basic UI **DONE**
-- input folder **DONE**
-- Classify emails (label)
-- graph labels by their number of emails
+11/25/18: 6 hours
+- Implemented UI except for actual analysis features screen
+- Implemented back/help functionality
+- Started feature selection
+
+11/27/18: 8 hours
+- Finished feature selection UI and structure
+- Finished basic sentiment analysis
+- Finished basic summarization
+- Finished basic labeling
+- 
