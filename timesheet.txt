@@ -28,5 +28,10 @@ TIMESHEET
 - Finished feature selection UI and structure
 - Finished basic sentiment analysis
 - Finished basic summarization
+
+11/28/18: 8 hours
 - Finished basic labeling
-- 
+- Connected analysis with UI
+- Implemented CSV export
+- Implemented some plots on export
+

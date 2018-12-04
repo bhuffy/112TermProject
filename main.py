@@ -2,7 +2,7 @@
 
 """
 Author: Bennett Huffman
-Last Modified: 11/19/18
+Last Modified: 11/28/18
 Course: 15-112
 Section: H
 """
@@ -19,11 +19,15 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
 style.use("ggplot")
+# style.use('fivethirtyeight')
 
 #tkinter is the best graphics library change my mind
 from tkinter import filedialog
 import tkinter as tk
 from tkinter import *
+
+# analysis tool file
+import analyzer as a
 
 ## Colors
 
@@ -66,6 +70,7 @@ def init(data):
     
     data.margin = 20
     data.filename = None
+    data.results = None
 
     
 ## Check Buttons
@@ -230,7 +235,6 @@ def loadDataScreenMousePosition(event, data):
 
 def loadDataScreenKeyPressed(event, data):
     pass
-    
 
 def loadDataScreenTimerFired(data):
     pass
@@ -267,8 +271,9 @@ def featureBounds(w, h, x, y):
 
 def featuresScreenMousePressed(event, data):
     if onContinueButton(data, event.x, event.y):
+        data.results = a.analyze(data.filename, data.features) # runs analysis
+        print(data.results)
         data.mode = "analyzeScreen"
-        # import analyzer # will need this 
     elif onHelpButton(data, event.x, event.y):
         data.mode = "helpScreen"
     elif onBackButton(data, event.x, event.y):
@@ -277,7 +282,7 @@ def featuresScreenMousePressed(event, data):
     w1, w2 = data.width/4, data.width*3/5
     startH = data.height/6
     
-    # features 1
+    # features
     if featureBounds(w1, startH*2, event.x, event.y):
         data.features['labels'][0] = not data.features['labels'][0]
         data.features['labels'][1] = OFFWHITE if data.features['labels'][1] == DARKBLUE else DARKBLUE
@@ -385,11 +390,11 @@ def analyzeScreenMousePressed(event, data):
     if data.features['freqdist'][0] and onFreqDistButton(data, event.x, event.y):
         pass
     if data.features['netdiagram'][0] and onNetDiagramButton(data, event.x, event.y):
-        pass
+        a.plotFrequencyDist(data.results['netdiagram'])
     if data.features['summary'][0] and onSummarizationButton(data, event.x, event.y):
         pass
     if data.features['sentiment'][0] and onSentimentButton(data, event.x, event.y):
-        pass
+        a.graphSentiment(data.results['sentiment'])
     if data.features['exportCSV'][0] and onExportCSVButton(data, event.x, event.y):
         pass
 
@@ -454,13 +459,11 @@ def analyzeScreenRedrawAll(canvas, data):
     # draws background and instructions
     canvas.create_rectangle(0,0,data.width,data.height, fill=MAINBLUE, outline="")
     canvas.create_text(data.width/2, 20, text="ANALYSIS", font="Arial 20 bold", fill=WHITE, anchor="n")
-    labels = ["university", "transfer", "terrible", "fancy", "chickens", "pepperoni", "eagles", "happiness", "carrots", "ambitious", "email", "admissions", "students", "campus", "methamphetamine"]
-    freqWords = [('university', 9506), ('college', 7719), ('bennett', 4837), ('the', 4791), ('admissions', 4742), ('email', 4590), ('application', 4584), ('students', 4583), ('admission', 4166), ('we', 3836), ('this', 3672), ('campus', 3633), ('visit', 3619), ('apply', 3401), ('you', 3049)]
     
     if data.features['labels'][0]:
-        drawLabels(canvas, data, labels)
+        drawLabels(canvas, data)
     if data.features['freqdist'][0]:
-        drawFreqWords(canvas, data, freqWords)
+        drawFreqWords(canvas, data)
     if data.features['netdiagram'][0]:
         drawNetworkDiagram(canvas, data)
     if data.features['summary'][0]:
@@ -478,19 +481,19 @@ def analyzeScreenRedrawAll(canvas, data):
     canvas.create_rectangle(data.width/2-90, data.height*11/12-30, data.width/2+90, data.height*11/12+30, fill=data.btnColor["bts"], outline="")
     canvas.create_text(data.width/2, data.height*11/12, text="BACK TO START", font="Arial 18", fill=WHITE)
     
-def drawLabels(canvas, data, labels):
+def drawLabels(canvas, data):
     canvas.create_text(data.width/12, data.height*2/10 - 25,
                        text="Labels", font="Arial 20 bold", fill=WHITE, anchor="w")
-    for i in range(len(labels)):
+    for i in range(len(data.results['labels'])):
         canvas.create_text(data.width/12, data.height*2/10 + 25*i,
-                       text=str(i+1) + ". " + labels[i], font="Arial 12", fill=WHITE, anchor="w")
+                       text=str(i+1) + ". " + data.results['labels'][i], font="Arial 12", fill=WHITE, anchor="w")
     
-def drawFreqWords(canvas, data, freqWords):
+def drawFreqWords(canvas, data):
     canvas.create_text(data.width*4/12, data.height*2/10 - 25,
                         text="Top Words", font="Arial 20 bold", fill=WHITE, anchor="w")
-    for i in range(len(freqWords)):
+    for i in range(len(data.results['freqdist'])):
         canvas.create_text(data.width*4/12, data.height*2/10 + 25*i,
-                       text=("%d %s %-20s %d") % (i+1, ".", freqWords[i][0], freqWords[i][1]), font="Arial 12", fill=WHITE, anchor="w")
+                       text=("%d %s %-20s %d") % (i+1, ".", data.results['freqdist'][i][0], data.results['freqdist'][i][1]), font="Arial 12", fill=WHITE, anchor="w")
     
 def drawExportCSVButton(canvas, data):
     canvas.create_rectangle(data.width*9/12-90, data.height*13/20-30, data.width*9/12+90, data.height*13/20+30, fill=data.btnColor["exportCSV"], outline="")
@@ -615,7 +618,7 @@ def run(width=300, height=300):
     data = Struct()
     data.width = width
     data.height = height
-    data.timerDelay = 100 # milliseconds
+    data.timerDelay = 100 # millisecondsg
     
     root = Tk()
     root.wm_title("Labely - Email Labeling & Text Analysis")
