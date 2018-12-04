@@ -25,6 +25,7 @@ style.use("ggplot")
 from tkinter import filedialog
 import tkinter as tk
 from tkinter import *
+from tkinter import messagebox
 
 # analysis tool file
 import analyzer as a
@@ -206,7 +207,8 @@ def loadDataScreenMousePressed(event, data):
             data.filename = fileRev[1] + "/" + fileRev[0]
         print(data.filename)
     elif onContinueButton(data, event.x, event.y):
-        data.mode = "featuresScreen"
+        if data.filename != None:
+            data.mode = "featuresScreen"
     elif onHelpButton(data, event.x, event.y):
         data.mode = "helpScreen"
     elif onBackButton(data, event.x, event.y):
@@ -396,7 +398,7 @@ def analyzeScreenMousePressed(event, data):
     if data.features['sentiment'][0] and onSentimentButton(data, event.x, event.y):
         a.graphSentiment(data.results['sentiment'])
     if data.features['exportCSV'][0] and onExportCSVButton(data, event.x, event.y):
-        pass
+        messagebox.showinfo("Export Completed.", "View your exported CSV of data located in the data/out.csv.")
 
 def analyzeScreenMousePosition(event, data):
     # continue button hover
@@ -493,7 +495,9 @@ def drawFreqWords(canvas, data):
                         text="Top Words", font="Arial 20 bold", fill=WHITE, anchor="w")
     for i in range(len(data.results['freqdist'])):
         canvas.create_text(data.width*4/12, data.height*2/10 + 25*i,
-                       text=("%d %s %-20s %d") % (i+1, ".", data.results['freqdist'][i][0], data.results['freqdist'][i][1]), font="Arial 12", fill=WHITE, anchor="w")
+                       text=("%d %s %-20s") % (i+1, ".", data.results['freqdist'][i][0]), font="Arial 12", fill=WHITE, anchor="w")
+        canvas.create_text(data.width*7/12-10, data.height*2/10 + 25*i,
+                       text=("%d") % (data.results['freqdist'][i][1]), font="Arial 12", fill=WHITE, anchor="e")
     
 def drawExportCSVButton(canvas, data):
     canvas.create_rectangle(data.width*9/12-90, data.height*13/20-30, data.width*9/12+90, data.height*13/20+30, fill=data.btnColor["exportCSV"], outline="")

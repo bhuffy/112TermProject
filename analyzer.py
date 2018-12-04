@@ -119,8 +119,8 @@ def getEmailSubjectList(emails):
 def getAllWords(emails):
     allWords = []
     for email in emails:
-        allWords.extend(word_tokenize(email.body))
-        allWords.extend(word_tokenize(email.subject))
+        allWords.extend(word_tokenize(processEmailText(email.body)))
+        allWords.extend(word_tokenize(processEmailText(email.subject)))
     return allWords
     
 #filter out stop words and non-sensical strings
@@ -129,7 +129,7 @@ def filterWords(words):
     d = enchant.Dict("en_US") # english dictionary
     filteredWords = []
     for word in words:
-        if word.isalpha() and len(word) > 1 and word not in stopWords and d.check(word):
+        if len(word) > 2 and word.isalpha() and word not in stopWords and d.check(word):
             filteredWords.append(word.lower())
     return filteredWords
     
@@ -142,10 +142,14 @@ def filterSentences(sentences):
             filteredSentences.append(sentence)
     return filteredSentences
     
-def processEmailBody(text):
-    # remove phone, email, links, and then anything non alpha-numeric
-    text = re.sub(r"((1?[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\w{4}))|([a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]{3})|(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)|([^a-zA-Z0-9\s_\-\.\,\:\;])", "", text)
-    print(text)
+# CITATION: http://www.noah.org/wiki/RegEx_Python#email_regex_pattern
+def processEmailText(text):
+    # remove phone, email, links, and then anything non alpha-numeric;
+    text = re.sub(r"((1?[\s-]?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\w{4}))|([a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]{3})|(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)|([^a-zA-Z0-9\s_\-\.\,\:\;\'])", "", text).replace("\n", " ")
+    text = ' '.join(text.split())
+    # text = text.replace('\n', ' ')
+    text = re.split(r"(This email|This e-mail|You’re receiving this|If you no longer wish|To opt-out|Best regards,|Best wishes,|Fond regards,|Kind regards,|Regards,|Sincerely,|Sincerely yours,|With appreciation,|Yours sincerely,|Yours truly,|Yours truly,|Thank you,|Unsubscribe|Contact Preferences)", text)[0]
+    # print(text)
     # sentences = nltk.sent_tokenize(text)
     # sentences = [nltk.word_tokenize(sent) for sent in sentences]
     # sentences = [nltk.pos_tag(sent) for sent in sentences]
@@ -212,16 +216,14 @@ def createDocFreqDist(words):
     return freqTable
 
 def findPhoneNumbers(text):
-    phoneNumbers = re.findall("(1?[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\w{4})", text)
+    phoneNumbers = re.findall("(1?[\s-]?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\w{4})", text)
     newNumbers = []
     for pnumber in phoneNumbers:
         newNumbers.append(re.sub(r"[\\n\s]", "", pnumber))
-    print(newNumbers)
     return newNumbers
     
 def findEmailAddresses(text):
     emailAddresses = re.findall('[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]{3}', text)
-    print(emailAddresses)
     return emailAddresses
     
 # score sentences
@@ -257,10 +259,10 @@ def summarizeDocuments(emails):
         # add found phone numbers and emails into email field
         email.addPhones(findPhoneNumbers(email.body))
         email.addEmailAddresses(findEmailAddresses(email.body))
-        text = processEmailBody(email.body)
+        text = processEmailText(email.body)
         
         # create frequency table of all words
-        words = filterWords(word_tokenize(email.body))
+        words = filterWords(word_tokenize(text))
         freqTable = createDocFreqDist(words)
         
         # create sentences
@@ -269,16 +271,19 @@ def summarizeDocuments(emails):
         averageValue = findAvgSentenceValue(sentenceValues)
         
         # create summary based on frequency
+        max = None
         summary = ""
         for sentence in sentences:
             if sentence in sentenceValues and sentenceValues[sentence] > (1.8 * averageValue):
                 summary +=  " " + sentence
+        print(summary)
         email.setSummary(summary)
+        
     
 ## Frequency Distribution
 
 def plotFrequencyDist(wordDist):
-    wordDist.plot(100, cumulative=False)
+    wordDist.plot(100, cumulative=False, alpha=0.9)
 
 ## Sentiment Analysis
 
@@ -334,9 +339,10 @@ def createDataFrame(emails):
                     'To Name': [], 'To Email': [], 'Subject': [],
                     'Message Id': [], 'Body': [], 'Label': [],
                     'Summary': [], 'Compound Sentiment': [], 'Positive Sentiment': [],
-                    'Neutral Sentiment': [], 'Negative Sentiment': []
+                    'Neutral Sentiment': [], 'Negative Sentiment': [], 'Phone Numbers': [],
+                    'Email Addresses': []
     })
-    # create dictionary from email objects
+    # create dictionary from email objects         self.phones = None self.emailAddresses = None
     for email in emails:
         data['Date Time'].append(email.date)
         data['From Name'].append(email.fromName)
@@ -358,6 +364,14 @@ def createDataFrame(emails):
             data['Positive Sentiment'].append("")
             data['Neutral Sentiment'].append("")
             data['Negative Sentiment'].append("")
+        if email.phones != None:
+            data['Phone Numbers'].append(email.phones)
+        else:
+            data['Phone Numbers'].append("")
+        if email.emailAddresses != None:
+            data['Email Addresses'].append(email.emailAddresses)
+        else:
+            data['Email Addresses'].append("")
     
     return pd.DataFrame.from_dict(data)
 
@@ -456,16 +470,21 @@ def analyze(filename, features):
         # labeling
         if features['labels'][0]:
             print("Generate labels!")
+            t1 = time.time()
             labelDist = tagWords(words)
             labels = generateLabels(wordDist)
-            topLabels = list(labels.keys())[:10] # top 10 labels
-            
+            topLabels = list(labels.keys())[:15] # top 10 labels
             results['labels'] = topLabels
+            t2 = time.time()
+            print("Labels", (t2-t1)/60)
         
         # frequency distribution
         if features['freqdist'][0]:
             print("Generate frequency distribution!")
-            results['freqdist'] = wordDist.most_common(10)
+            t1 = time.time()
+            results['freqdist'] = wordDist.most_common(15)
+            t2 = time.time()
+            print("Freq Dist", (t2-t1)/60)
         
         # network diagram
         if features['netdiagram'][0]:
@@ -479,26 +498,34 @@ def analyze(filename, features):
         # summarization
         if features['summary'][0]:
             print("Summarize documents!")
+            t1 = time.time()
             summarizeDocuments(emails)
+            t2 = time.time()
+            print("Summarization", (t2-t1)/60)
         
         # sentiment analysis
         if features['sentiment'][0]:
             print("Analyze sentiment!")
+            t1 = time.time()
             analyzeSentiments(emails)
             data = prepSentimentGraph(emails)
-            
             results['sentiment'] = data
+            t2 = time.time()
+            print("Sentiment Analysis", (t2-t1)/60)
             
         # csv export
         if features['exportCSV'][0]:
+            print("Exporting to CSV...")
+            t1 = time.time()
             exportToCSV(emails)
             results['exportCSV'] = 'data/out.csv'
+            t2 = time.time()
+            print("CSV Export", (t2-t1)/60)
     
     t2 = time.time()
     print((t2-t1)/60, results)
     return results
     
-
 ## RUN ANALYSIS
 
 features = {
@@ -513,21 +540,6 @@ features = {
 analyze('data/emails.csv', features)
 
 """
-REGEX: CITATION: http://www.noah.org/wiki/RegEx_Python#email_regex_pattern
-
-Match phone numbers:
-phoneNumbers = re.findall("1?[\s-]?\(?(\d{3})\)?[\s-]?\d{3}[\s-]?\w{4}", email)
-phoneRegex = re.compile(r"1?[\s-]?\(?(\d{3})\)?[\s-]?\d{3}[\s-]?\w{4}", re.IGNORECASE)
-re.sub(STUFF)
-
-Match emails:
-emailAddresses = re.findall('[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]+', email)
-emailRegex = re.compile(r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]+', re.IGNORECASE)
-re.sub(STUFF)
-
-urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', page)
-re.sub(STUFF)
-
 Match image files:
 (\w+)\.(jpg|png|gif|pdf|docx)
 """
