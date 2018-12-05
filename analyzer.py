@@ -70,9 +70,10 @@ class Email(object):
         self.body = str(data['Body'])
         self.sentiment = None
         self.summary = ""
-        self.label = ""
+        self.labels = None
         self.phones = None
         self.emailAddresses = None
+        self.streetAddresses = None
         
     def setSummary(self, summary):
         self.summary = summary
@@ -80,14 +81,17 @@ class Email(object):
     def setSentiment(self, sentiment):
         self.sentiment = sentiment
         
-    def setLabel(self, label):
-        self.label = label
+    def setLabels(self, labels):
+        self.labels = labels
     
     def addPhones(self, phones):
         self.phones = phones
     
     def addEmailAddresses(self, emailAddresses):
         self.emailAddresses = emailAddresses
+        
+    def addStreetAddresses(self, streetAddresses):
+        self.streetAddresses = streetAddresses
 
 # CITATION: https://realpython.com/python-csv/
 def createEmailList(path):
@@ -114,13 +118,21 @@ def getEmailSubjectList(emails):
     return documents
     
 ## Email Pre-Processing
+   
+#get all words in bodies and subject
+def getAllSentences(emails):
+    allSentences = []
+    for email in emails:
+        allSentences.extend(sent_tokenize(processEmailText(email.body)))
+        allSentences.extend(sent_tokenize(processEmailText(email.subject)))
+    return allSentences
     
 #get all words in bodies and subject
-def getAllWords(emails):
+def getAllWords(sentences):
     allWords = []
-    for email in emails:
-        allWords.extend(word_tokenize(processEmailText(email.body)))
-        allWords.extend(word_tokenize(processEmailText(email.subject)))
+    for sentence in sentences:
+        allWords.extend(word_tokenize(sentence))
+        allWords.extend(word_tokenize(sentence))
     return allWords
     
 #filter out stop words and non-sensical strings
@@ -145,14 +157,9 @@ def filterSentences(sentences):
 # CITATION: http://www.noah.org/wiki/RegEx_Python#email_regex_pattern
 def processEmailText(text):
     # remove phone, email, links, and then anything non alpha-numeric;
-    text = re.sub(r"((1?[\s-]?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\w{4}))|([a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]{3})|(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)|([^a-zA-Z0-9\s_\-\.\,\:\;\'])", "", text).replace("\n", " ")
+    text = re.sub(r"((1?[\s-]?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\w{4}))|([a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]{3})|(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)|([0-9]* .*, .* [a-zA-Z]{2} [0-9]{5}-?[0-9]{4}?)|([^a-zA-Z0-9\s_\-\.\,\:\;\'])", "", text).replace("\n", " ")
     text = ' '.join(text.split())
-    # text = text.replace('\n', ' ')
-    text = re.split(r"(This email|This e-mail|You’re receiving this|If you no longer wish|To opt-out|Best regards,|Best wishes,|Fond regards,|Kind regards,|Regards,|Sincerely,|Sincerely yours,|With appreciation,|Yours sincerely,|Yours truly,|Yours truly,|Thank you,|Unsubscribe|Contact Preferences)", text)[0]
-    # print(text)
-    # sentences = nltk.sent_tokenize(text)
-    # sentences = [nltk.word_tokenize(sent) for sent in sentences]
-    # sentences = [nltk.pos_tag(sent) for sent in sentences]
+    text = re.split(r"(This email|This e-mail|You’re receiving this|If you no longer wish|To opt-out|Best regards,|Best wishes,|Fond regards,|Kind regards,|Regards,|Sincerely,|Sincerely yours,|With appreciation,|Yours sincerely,|Yours truly,|Yours truly,|Thank you,|Unsubscribe|unsubscribe|To unsubscribe|Contact Preferences|Follow this link|Our system has detected|All rights reserved|No plain text content|---|To view this message in your browser|tel:|Fax:|The fine print|Copyright)", text)[0]
     return text
     
 ## Network Diagram
@@ -162,7 +169,7 @@ def createSynDictionary(allWords, words):
     synDict = dict()
     for word in words:
         synonyms = findSynonyms(word)
-        synDict[word] = synonymsInDocument(allWords, synonyms)
+        synDict[word] = synonymsInDocument(allWords, synonyms, word)
     return synDict
 
 # finds the synonyms of a given word via wordnet synsets; NOTE: pronouns + some words have no synsets (i.e, because, it, everything, etc.)
@@ -177,7 +184,7 @@ def findSynonyms(word):
     return synonyms
     
 # returns all synonyms that exist in as document
-def synonymsInDocument(allWords, synonyms):
+def synonymsInDocument(allWords, synonyms, word):
     documentSyns = set()
     for syn in synonyms:
         if syn != word and syn in allWords:
@@ -186,7 +193,7 @@ def synonymsInDocument(allWords, synonyms):
 
 # creates the 2 column dataframe mapping the connections
 def createNetworkDF(synDict):
-    data = dict({'to': [], 'from': []})
+    data = dict({'from': [], 'to': []})
     # create dictionary from email objects
     for word1 in synDict:
         for word2 in synDict[word1]:
@@ -226,6 +233,10 @@ def findEmailAddresses(text):
     emailAddresses = re.findall('[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]{3}', text)
     return emailAddresses
     
+def findStreetAddresses(text):
+    streetAddresses = re.findall('([0-9]* .*, .* [a-zA-Z]{2} [0-9]{5}-?[0-9]{4}?)', text)
+    return streetAddresses
+    
 # score sentences
 def scoreSentences(sentences, freqTable):
     sentenceValues = dict()
@@ -259,6 +270,7 @@ def summarizeDocuments(emails):
         # add found phone numbers and emails into email field
         email.addPhones(findPhoneNumbers(email.body))
         email.addEmailAddresses(findEmailAddresses(email.body))
+        email.addStreetAddresses(findStreetAddresses(email.body))
         text = processEmailText(email.body)
         
         # create frequency table of all words
@@ -271,11 +283,14 @@ def summarizeDocuments(emails):
         averageValue = findAvgSentenceValue(sentenceValues)
         
         # create summary based on frequency
-        max = None
+        maxValue = 0
         summary = ""
         for sentence in sentences:
-            if sentence in sentenceValues and sentenceValues[sentence] > (1.8 * averageValue):
-                summary +=  " " + sentence
+            if sentence in sentenceValues:
+                if sentenceValues[sentence] > maxValue:
+                    summary = sentence
+                elif sentenceValues[sentence] == maxValue:
+                    summary += sentence
         print(summary)
         email.setSummary(summary)
         
@@ -283,7 +298,7 @@ def summarizeDocuments(emails):
 ## Frequency Distribution
 
 def plotFrequencyDist(wordDist):
-    wordDist.plot(100, cumulative=False, alpha=0.9)
+    wordDist.plot(50, cumulative=False, title="Frequency Distribution", color=BRIGHTBLUE)
 
 ## Sentiment Analysis
 
@@ -320,7 +335,7 @@ def prepSentimentGraph(emails):
 def graphSentiment(data):
     formatter = DateFormatter('%m/%d/%y')
     fig, ax = plt.subplots()
-    # 0: dates, 1: sentiments; email label with point markers and 
+    # 0: dates, 1: sentiments; email label with point markers 
     plt.plot_date(data[0], data[1], label='emails', color=BRIGHTBLUE, marker=".")
     ax.xaxis.set_major_formatter(formatter)
     ax.xaxis.set_tick_params(rotation=30, labelsize=8)
@@ -329,6 +344,7 @@ def graphSentiment(data):
     plt.ylabel('Sentiment')
     plt.title('Sentiment Graph')
     plt.legend()
+    # plt.subplots_adjust(left=0.09, bottom=0.20, right=0.94, top=0.90, wspace=0.2, hspace=0)
     
     plt.show()
 
@@ -337,10 +353,10 @@ def graphSentiment(data):
 def createDataFrame(emails):
     data = dict({'Date Time': [], 'From Name': [], 'From Email': [],
                     'To Name': [], 'To Email': [], 'Subject': [],
-                    'Message Id': [], 'Body': [], 'Label': [],
+                    'Message Id': [], 'Body': [], 'Labels': [],
                     'Summary': [], 'Compound Sentiment': [], 'Positive Sentiment': [],
                     'Neutral Sentiment': [], 'Negative Sentiment': [], 'Phone Numbers': [],
-                    'Email Addresses': []
+                    'Email Addresses': [], 'Street Addresses': []
     })
     # create dictionary from email objects         self.phones = None self.emailAddresses = None
     for email in emails:
@@ -352,8 +368,11 @@ def createDataFrame(emails):
         data['Subject'].append(email.subject)
         data['Message Id'].append(email.messageId)
         data['Body'].append(email.body)
-        data['Label'].append(email.label)
         data['Summary'].append(email.summary)
+        if email.labels != None:
+            data['Labels'].append(email.labels)
+        else:
+            data['Labels'].append(email.labels)
         if email.sentiment != None:
             data['Compound Sentiment'].append(email.sentiment['compound'])
             data['Positive Sentiment'].append(email.sentiment['pos'])
@@ -372,6 +391,10 @@ def createDataFrame(emails):
             data['Email Addresses'].append(email.emailAddresses)
         else:
             data['Email Addresses'].append("")
+        if email.streetAddresses != None:
+            data['Street Addresses'].append(email.streetAddresses)
+        else:
+            data['Street Addresses'].append("")
     
     return pd.DataFrame.from_dict(data)
 
@@ -381,75 +404,74 @@ def exportToCSV(emails):
 
 ## Labeling
 
-# CITATION: using disjoint for comparison due to efficiency! https://stackoverflow.com/questions/3170055/test-if-lists-share-any-items-in-python
+# tags all words to their respective parts of speech
+def tagWords(words):
+    return nltk.pos_tag(words)
 
-def tagWords(text):
-    return nltk.pos_tag(text)
+# creates a frequency distribution based on the given part of speech
+def createTagDist(tagPrefix, taggedWords):
+    wordsForDictionary = []
+    for (word, tag) in taggedWords:
+        if tag.startswith(tagPrefix):
+            wordsForDictionary.append((tag, word))
+    fd = nltk.FreqDist(wordsForDictionary)
+    return fd
 
-def createTagDict(targetTag, taggedText):
-    cfd = nltk.ConditionalFreqDist((tag, word) for (word, tag) in taggedText if tag.startswith(targetTag))
-    return dict((tag, cfd[tag].most_common(5)) for tag in cfd.conditions())
-
-def generateLabels(wordDist):
-    wordDict = dict(wordDist)
+def generateLabels(wordDict):
     labelDict = dict()
     
-    for word in wordDict:
+    for posWordPair in wordDict:
+        # get word from pos and word tuple
+        word = posWordPair[1]
         synonyms = findSynonyms(word)
         #check if word is in any of the existing labels
         wordExists = False
         for label in labelDict:
+            #CITATION: disjoint => comparison efficiency! https://stackoverflow.com/questions/3170055/test-if-lists-share-any-items-in-python
             if word in labelDict[label][0] or not synonyms.isdisjoint(labelDict[label][0]):
                 labelDict[label][0].add(word)
-                labelDict[label][1] += wordDict[word]
+                labelDict[label][1] += wordDict[posWordPair]
                 wordExists = True
                 break
         
         #if word isn't in any labels, create new one!
         if not wordExists:
-            labelDict[word] = [set([word]), wordDict[word]]
-    
+            labelDict[word] = [set([word]), wordDict[posWordPair]]
     return labelDict
     
+def labelEmails(emails, labels):
+    for email in emails:
+        indivLabels = set()
+        if email.body != "" or email.subject != "":
+            for label in labels:
+                if any(word in email.body for word in labels[label][0]) or \
+                    any(word in email.subject for word in labels[label][0]):
+                        indivLabels.add(label)
+        print(indivLabels)
+        email.setLabels(indivLabels)
 
-## Clustering (TESTING IN PROGRESS)
-
-# def findKMeans(documents):
-#     # vectorize text
-#     vectorizer = TfidfVectorizer(stop_words='english')
-#     X = vectorizer.fit_transform(documents)
-#     
-#     # start with 2 clusters
-#     true_k = 2
-#     model = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1)
-#     model.fit(X)
-#     
-#     print("Top terms per cluster:")
-#     order_centroids = model.cluster_centers_.argsort()[:, ::-1] # don't know what this does...?
-#     terms = vectorizer.get_feature_names()
-#     for i in range(true_k):
-#         print("Cluster %d:" % i),
-#         for ind in order_centroids[i, :10]:
-#             print(' %s' % terms[ind]),
-#         print()
-#     
-#     print("\n")
-#     print("Prediction")
-#     
-#     Y = vectorizer.transform(["College is great, please apply and come to Lawrence!."])
-#     prediction = model.predict(Y)
-#     print(prediction)
-#     
-#     Y = vectorizer.transform(["Bennett, congratulations on something, please visit us. We can do something amazing."])
-#     prediction = model.predict(Y)
-#     print(prediction)
-
-"""
-1. take all bodies of emails
-2. find nouns for clustering
-3. find most frequent
-4. find adjectives for classification of sentiment
-"""
+def prepLabelGraph(emails, topLabels):
+    print("Preparing label graph features...")
+    labels = dict((label, 0) for label in topLabels)
+    for email in emails:
+        if email.labels not in [None, set()]:
+            for label in email.labels:
+                labels[label] += 1
+    return (list(labels.keys()), list(labels.values()))
+    
+def graphLabels(data):
+    fig, ax = plt.subplots()
+    # 0: labels (words), 1: label frequency
+    plt.bar(data[0], data[1], label="Frequency", color=BRIGHTBLUE)
+    ax.xaxis.set_tick_params(rotation=70, labelsize=8)
+    
+    plt.xlabel('Labels')
+    plt.ylabel('Frequency')
+    plt.title('Label Frequency')
+    plt.legend()
+    # plt.subplots_adjust(left=0.09, bottom=0.20, right=0.94, top=0.90, wspace=0.2, hspace=0)
+    
+    plt.show()
 
 ## Analysis Controller
 
@@ -463,7 +485,8 @@ def analyze(filename, features):
     if filename not in [None, ""]:
         print("Processing emails...")
         emails = createEmailList(filename)
-        words = filterWords(getAllWords(emails))
+        sentences = getAllSentences(emails)
+        words = filterWords(getAllWords(sentences))
         uniqueWords = set(words)
         wordDist = nltk.FreqDist(words)
         
@@ -471,9 +494,24 @@ def analyze(filename, features):
         if features['labels'][0]:
             print("Generate labels!")
             t1 = time.time()
-            labelDist = tagWords(words)
-            labels = generateLabels(wordDist)
-            topLabels = list(labels.keys())[:15] # top 10 labels
+            
+            # Takes approx. 1 minute to tag all words; Noun (NN), Adverb(RB), Verb (VB), JJ (Adjective)
+            taggedWords = tagWords(words)
+            labelDist = createTagDist("NN", taggedWords)
+            
+            # labelDist should have frequency of nouns, adjectives, adverbs, verbs
+            labels = generateLabels(dict(labelDist))
+            # CITATION: https://stackoverflow.com/questions/1747817/create-a-dictionary-with-list-comprehension-in-python
+            topLabelsDict = {key:labels[key] for key in list(labels.keys())[:20]}
+            print(topLabelsDict)
+            
+            #label emails and get keys
+            labelEmails(emails, topLabelsDict)
+            topLabels = list(labels.keys())[:15] # top 15 labels
+            
+            # prepare data for graph
+            data = prepLabelGraph(emails, list(topLabelsDict.keys()))
+            graphLabels(data)
             results['labels'] = topLabels
             t2 = time.time()
             print("Labels", (t2-t1)/60)
@@ -489,7 +527,8 @@ def analyze(filename, features):
         # network diagram
         if features['netdiagram'][0]:
             # synonym mapping: 12.5 minutes!!
-            # synConnections = createSynDictionary(words, uniqueWords)
+            synConnections = createSynDictionary(words, uniqueWords)
+            print(synConnections)
             # TODO: create diagram from pandas df
             # netdf = createNetworkDF(synConnections)
             # createNetDiagram(netdf)
@@ -528,16 +567,16 @@ def analyze(filename, features):
     
 ## RUN ANALYSIS
 
-features = {
-    'labels': [False, "#f5f5f5"],
-    'freqdist': [False, "#f5f5f5"],
-    'netdiagram': [False, "#f5f5f5"],
-    'summary': [True, "#f5f5f5"],
-    'sentiment': [False, "#f5f5f5"],
-    'exportCSV': [False, "#f5f5f5"]
-}
-
-analyze('data/emails.csv', features)
+# features = {
+#     'labels': [False, "#f5f5f5"],
+#     'freqdist': [False, "#f5f5f5"],
+#     'netdiagram': [True, "#f5f5f5"],
+#     'summary': [False, "#f5f5f5"],
+#     'sentiment': [False, "#f5f5f5"],
+#     'exportCSV': [False, "#f5f5f5"]
+# }
+# 
+# analyze('data/emails.csv', features)
 
 """
 Match image files:

@@ -190,3 +190,15 @@ print("Classification:", votedClassifier.classify(testingSet[1][0]), "Confidence
 print("Classification:", votedClassifier.classify(testingSet[2][0]), "Confidence:", votedClassifier.confidence(testingSet[2][0]) * 100, "%")
 print("Classification:", votedClassifier.classify(testingSet[3][0]), "Confidence:", votedClassifier.confidence(testingSet[3][0]) * 100, "%")
 
+
+"""
+Naive Bayesian Classifier algorithm:
+P(c|x) = (P(x|c) * P(c)) / P(x)
+
+where:
+
+P(c|x) is the posterior probability of class (c, target) given predictor (x, attributes).
+P(c) is the prior probability of class.
+P(x|c) is the likelihood which is the probability of predictor given class.
+P(x) is the prior probability of predictor.
+"""

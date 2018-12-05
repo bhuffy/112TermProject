@@ -14,3 +14,15 @@ Current plans:
 - For labels, make them more general—use synonyms to link together as many emails as possible. You can always make it more specific.
 - To load data, import 'load data' inside a function so it won't run on anything until the person has uploaded their file.
 -for k-means, try to implement the Euclidean distance algorithm myself?
+
+================================================================================
+Add verbs > adjectives > adverbs for potential labels; does it work better?
+Incorporate semantic relatedness into labeling
+Maybe explore stemming more...?
+
+Create network diagram!
+Create naive bayesian algorithm myself!
+How to order bar chart from most to least frequency
+
+Last case:
+Maybe explore multiprocessing

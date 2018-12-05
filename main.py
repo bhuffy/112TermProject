@@ -39,6 +39,7 @@ MAINBLUE = "#3E92CC"
 MEDBLUE = "#004385"
 OFFWHITE = "#D6E8F4"
 WHITE = "#FFFFFF"
+GREY = "#BEBEBE"
 
 ## Initialize Programs! ##
 
@@ -47,7 +48,7 @@ def init(data):
     data.mode = "startScreen"
     data.btnColor = {
         "start": DARKBLUE,
-        "continue": DARKBLUE,
+        "continue": GREY,
         "upload": DARKBLUE,
         "bts": DARKBLUE,
         "back": OFFWHITE,
@@ -72,6 +73,9 @@ def init(data):
     data.margin = 20
     data.filename = None
     data.results = None
+    
+    data.particles = []
+    data.speed = 5
 
     
 ## Check Buttons
@@ -216,9 +220,15 @@ def loadDataScreenMousePressed(event, data):
 
 def loadDataScreenMousePosition(event, data):
     if onContinueButton(data, event.x, event.y):
-        data.btnColor["continue"] = HOVER_DARKBLUE
+        if data.filename == None:
+            data.btnColor["continue"] = GREY
+        else:
+            data.btnColor["continue"] = HOVER_DARKBLUE
     else:
-        data.btnColor["continue"] = DARKBLUE
+        if data.filename == None:
+            data.btnColor["continue"] = GREY
+        else:
+            data.btnColor["continue"] = DARKBLUE
         
     if onUploadButton(data, event.x, event.y):
         data.btnColor["upload"] = HOVER_DARKBLUE
@@ -247,7 +257,7 @@ def loadDataScreenRedrawAll(canvas, data):
     canvas.create_rectangle(data.margin, data.margin+75,
                             data.width-data.margin, data.height-data.margin-75, outline=WHITE, dash=(5, 10), fill=MAINBLUE)
     canvas.create_text(data.width/2, data.height/12,
-                       text="Drag and drop or press 'upload' to upload your csv of emails.", font="Arial 18 bold", fill=WHITE)
+                       text="Press 'upload' to upload your csv of emails.", font="Arial 18 bold", fill=WHITE)
     
     # help button
     canvas.create_text(data.width - 10, 20, text="HELP", font="Arial 16 bold", fill=data.btnColor["help"], anchor="e")
@@ -258,6 +268,10 @@ def loadDataScreenRedrawAll(canvas, data):
     canvas.create_rectangle(data.width/2-75, data.height/2-30, data.width/2+75, data.height/2+30, fill=data.btnColor["upload"], outline="")
     canvas.create_text(data.width/2, data.height/2,
                        text="UPLOAD", font="Arial 18", fill=WHITE)
+                       
+    # File upload text
+    if data.filename != None:
+        canvas.create_text(data.width/2, data.height/2-35, text=data.filename, font="Arial 16", fill=WHITE, anchor="s")
                  
     # continue button
     canvas.create_rectangle(data.width/2-85, data.height*11/12-30, data.width/2+85, data.height*11/12+30, fill=data.btnColor["continue"], outline="")
@@ -578,11 +592,11 @@ def helpScreenRedrawAll(canvas, data):
     canvas.create_text(data.width/2, 40,
                        text="How to Use Labely", font="Arial 26 bold", fill=WHITE, anchor="n")
                        
-    instructions = ["Press start", "Click on 'upload' to select a csv file containing your email exports from Gmail.", "Select the features you'd like to analyze.", "Wait for the analysis to complete...", "...and voila! You can see your results and see data visualizations of your emails.", "P.S. Click on the buttons see visualizations!"]
+    instructions = ["Press start.", "Click on 'upload' to select a csv file containing your email export from Gmail.", "Select the features you'd like to analyze. Note that some are only viewable in the CSV export.", "Wait for the analysis to complete...", "...and voila! You can view labels and data visualizations of your emails. Press 'Back to Start' to go back to the home page.", "Click on the buttons see visualizations! Navigate visualizations with the tools in the bottom left corner.", "To find your CSV export, navigate to the data folder inside the project files and look for out.csv."]
                
     for i in range(len(instructions)):
         canvas.create_text(data.width/10, data.height*1/4 + 50*i, text=str(i+1) + ". " + instructions[i],
-                                font="Arial 16", fill=WHITE, anchor = "nw")
+                                font="Arial 12", fill=WHITE, anchor = "nw")
                        
     # back to start button
     canvas.create_rectangle(data.width/2-90, data.height*11/12-30, data.width/2+90, data.height*11/12+30, fill=data.btnColor["bts"], outline="")
