@@ -10,7 +10,7 @@ Labely is an email labeling and analysis tool for company complaints that helps 
 ## Dependencies
 * Python 3 (https://www.python.org/downloads/)
 * NLTK (http://www.nltk.org/install.html)
-** Run nltk.download() upon first use of import nltk in file
+    - Run `nltk.download()` upon first use of `import nltk` in file
 * MatplotLib (pip install matplotlib)
 * Enchant (pip install pyenchant)
 * NetworkX (pip install networkx)
