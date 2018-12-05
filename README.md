@@ -11,10 +11,10 @@ Labely is an email labeling and analysis tool for company complaints that helps 
 * Python 3 (https://www.python.org/downloads/)
 * NLTK (http://www.nltk.org/install.html)
     - Run `nltk.download()` upon first use of `import nltk` in file
-* MatplotLib (pip install matplotlib)
-* Enchant (pip install pyenchant)
-* NetworkX (pip install networkx)
-* Pandas (pip install pandas)
+* MatplotLib &rarr; `pip install matplotlib`
+* Enchant &rarr; `pip install pyenchant`
+* NetworkX &rarr; `pip install networkx`
+* Pandas &rarr; `pip install pandas`
 
 ## Running Labely
 Downlaod the project as a ZIP file. Select an exported CSV file of the emails you want to analyze from Gmail (may require converting from MBOX to CSV) and place it in the 'data' folder. Sample CSV files of emails can be downloaded [here](https://drive.google.com/drive/folders/1UtdwyLho-S8gaU2K0bJ6m8TXxAeJbOSV?usp=sharing). Then run the "main.py" file and follow instructions.
