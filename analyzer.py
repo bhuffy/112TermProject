@@ -29,11 +29,6 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk.stem.snowball import SnowballStemmer
 stemmer = SnowballStemmer("english")
 
-# k-means
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
-from sklearn.metrics import adjusted_rand_score
-
 # matplotlib
 import matplotlib
 import matplotlib.pyplot as plt
