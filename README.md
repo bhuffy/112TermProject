@@ -21,7 +21,7 @@ Labely is an email labeling and analysis tool for company complaints. This progr
 3. Run the "main.py" file to begin. Press help for instructions.
 
 ## Video
-[Check out the demo!](https://youtube.com/)
+[Check out the demo!](https://youtu.be/enJEkZmqT-E)
 
 ## Features (toggle-able)
 * Email labeling and graphical visualization

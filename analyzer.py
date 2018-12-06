@@ -96,20 +96,6 @@ def createEmailList(path):
         for row in csv_reader:
             emails.append(Email(row))
     return emails
-
-# returns list of all email bodies
-def getEmailBodyList(emails):
-    documents = []
-    for email in emails:
-        documents.append(email.body)
-    return documents
-
-# returns list of all email subject lines
-def getEmailSubjectList(emails):
-    documents = []
-    for email in emails:
-        documents.append(email.subject)
-    return documents
     
 ## Email Pre-Processing
    
@@ -158,14 +144,6 @@ def processEmailText(text):
     
 ## Network Diagram
 
-# creates a dictionary of the synonyms for each word
-def createSynDictionary(allWords, words):
-    synDict = dict()
-    for word in words:
-        synonyms = findSynonyms(word)
-        synDict[word] = synonymsInDocument(allWords, synonyms, word)
-    return synDict
-
 # finds the synonyms of a given word via wordnet synsets; NOTE: pronouns + some words have no synsets (i.e, because, it, everything, etc.)
 def findSynonyms(word):
     synonyms = set()
@@ -176,33 +154,31 @@ def findSynonyms(word):
             for lem in hypernym.lemmas():
                 synonyms.add(lem.name())
     return synonyms
-    
-# returns all synonyms that exist in as document
-def synonymsInDocument(allWords, synonyms, word):
-    documentSyns = set()
-    for syn in synonyms:
-        if syn != word and syn in allWords:
-            documentSyns.add(syn)
-    return documentSyns
 
-# creates the 2 column dataframe mapping the connections
-def createNetworkDF(synDict):
-    data = dict({'from': [], 'to': []})
-    # create dictionary from email objects
-    for word1 in synDict:
-        for word2 in synDict[word1]:
-            data['from'].append(word1)
-            data['to'].append(word2)
-    return pd.DataFrame.from_dict(data)
+# CITATION: https://networkx.github.io/documentation/stable/auto_examples/drawing/plot_unix_email.html#sphx-glr-auto-examples-drawing-plot-unix-email-py
+def createNetDiagram(emails):
+    G = nx.MultiDiGraph()  # create empty graph
     
-def createNetDiagram(df):
-    pass
+    # parse each of first 50 messages and build graph
+    connections = []
+    connLength = min(len(emails), 50)
+    for i in range(connLength):
+        connections.append((emails[i].fromEmail, emails[i].toEmail))  # sender, receiver
+        
+    # now add the edges for this mail message
+    for (source, recipient) in connections:
+        G.add_edge(source, recipient)
+    return G
+    
+def graphNetDiagram(G):
+    pos = nx.spring_layout(G, iterations=10)
+    nx.draw(G, pos, node_size=0, alpha=0.4, edge_color=BRIGHTBLUE, font_size=8, with_labels=True)
+    plt.show()
 
 ## Summarization
 
 # CITATION: https://dev.to/davidisrawi/build-a-quick-summarizer-with-python-and-nltk
 # CITATION: https://gist.github.com/Sebastian-Nielsen/3bc45cbba6cb25837f5a6f11dbeeb044
-# Creates summary based on sentences that have the most, most frequent words above a theshold (the average)
 
 def createDocFreqDist(words):
     freqTable = dict()
@@ -216,6 +192,7 @@ def createDocFreqDist(words):
             freqTable[word] = 1
     return freqTable
 
+# returns list of all phone numbers in a text
 def findPhoneNumbers(text):
     phoneNumbers = re.findall("(1?[\s-]?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\w{4})", text)
     newNumbers = []
@@ -223,10 +200,12 @@ def findPhoneNumbers(text):
         newNumbers.append(re.sub(r"[\\n\s]", "", pnumber))
     return newNumbers
     
+# returns list of all email addressses in a text
 def findEmailAddresses(text):
     emailAddresses = re.findall('[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]{3}', text)
     return emailAddresses
     
+# returns list of all street addresses in a text (does not capture all)
 def findStreetAddresses(text):
     streetAddresses = re.findall('([0-9]* .*, .* [a-zA-Z]{2} [0-9]{5}-?[0-9]{4}?)', text)
     return streetAddresses
@@ -254,8 +233,8 @@ def findAvgSentenceValue(sentenceValues):
     if len(sentenceValues) > 0:
         average = int(sum / len(sentenceValues))
     return average
-    
-# gets most significant sentences from a document
+
+# gets most significant sentences from a document based on most frequent words
 def summarizeDocuments(emails):
     for email in emails:
         if email.body == "":
@@ -296,17 +275,15 @@ def plotFrequencyDist(wordDist):
 ## Sentiment Analysis
 
 # CITATION: https://www.pingshiuanchua.com/blog/post/simple-sentiment-analysis-python
-# CITATION: https://monkeylearn.com/sentiment-analysis/ (READ THIS!)
 # CITATION: http://www.laurentluce.com/posts/twitter-sentiment-analysis-using-python-and-nltk/
 
-# Create a matplotlib chart with the results graphing the general sentiments!
-
-# Implement Naive Bayesian Algorithm and classifier later!
+# Gets the sentiment using vader sentiment analysis in nltk
 def getSentiment(sentence):
     sentAnalyzer = SentimentIntensityAnalyzer()
     score = sentAnalyzer.polarity_scores(sentence)
     return score
     
+# sets the sentiment of all emails
 def analyzeSentiments(emails):
     for email in emails:
         if email.body == "":
@@ -314,6 +291,7 @@ def analyzeSentiments(emails):
         score = getSentiment(email.body)
         email.setSentiment(score)
         
+# produces list of dates and sentiments for graphing
 def prepSentimentGraph(emails):
     print("Preparing sentiment graph features...")
     dates = []
@@ -351,7 +329,7 @@ def createDataFrame(emails):
                     'Neutral Sentiment': [], 'Negative Sentiment': [], 'Phone Numbers': [],
                     'Email Addresses': [], 'Street Addresses': []
     })
-    # create dictionary from email objects         self.phones = None self.emailAddresses = None
+    # create dictionary from email objects
     for email in emails:
         data['Date Time'].append(email.date)
         data['From Name'].append(email.fromName)
@@ -480,7 +458,7 @@ def analyzeLabels(emails, words, results):
     
     #label emails and get keys
     labelEmails(emails, topLabelsDict)
-    topLabels = list(labels.keys())[:10] # top 15 labels
+    topLabels = list(labels.keys())[:10] # top 10 labels
     
     # prepare data for graph
     data = prepLabelGraph(emails, list(topLabelsDict.keys()))
@@ -497,6 +475,7 @@ def analyze(filename, features):
     # get emails from csv and filter them if file exists
     if filename not in [None, ""]:
         t1_1 = time.time()
+        print("Processing emails...")
         emails = createEmailList(filename)
         sentences = getAllSentences(emails)
         words = filterWords(getAllWords(sentences))
@@ -507,48 +486,46 @@ def analyze(filename, features):
         
         # labeling
         if features['labels'][0]:
-            print("Generate labels!")
+            print("Generating labels...")
             t1 = time.time()
             results = analyzeLabels(emails, words, results)
             t2 = time.time()
-            print("Labels", (t2-t1)/60)
+            print("Labels:", (t2-t1)/60)
         
         # frequency distribution
         if features['freqdist'][0]:
-            print("Generate frequency distribution!")
+            print("Generate frequency distribution...")
             t1 = time.time()
             results['freqdist'][0] = wordDist.most_common(10)
             results['freqdist'][1] = wordDist
             t2 = time.time()
-            print("Freq Dist", (t2-t1)/60)
+            print("Freq Dist:", (t2-t1)/60)
         
         # network diagram
         if features['netdiagram'][0]:
             print("Generate network diagram...")
-            # synonym mapping: 32.7 minutes!!
-            synConnections = createSynDictionary(words, uniqueWords)
-            # TODO: create diagram from pandas df
-            # netdf = createNetworkDF(synConnections)
-            # createNetDiagram(netdf)
-            results['netdiagram'] = wordDist
+            t1 = time.time()
+            results['netdiagram'] = createNetDiagram(emails)
+            t2 = time.time()
+            print("Net diagram:",(t2-t1)/60)
     
         # summarization
         if features['summary'][0]:
-            print("Summarize documents!")
+            print("Summarize documents...")
             t1 = time.time()
             summarizeDocuments(emails)
             t2 = time.time()
-            print("Summarization", (t2-t1)/60)
+            print("Summarization:", (t2-t1)/60)
         
         # sentiment analysis
         if features['sentiment'][0]:
-            print("Analyze sentiment!")
+            print("Analyze sentiment...")
             t1 = time.time()
             analyzeSentiments(emails)
             data = prepSentimentGraph(emails)
             results['sentiment'] = data
             t2 = time.time()
-            print("Sentiment Analysis", (t2-t1)/60)
+            print("Sentiment Analysis:", (t2-t1)/60)
             
         # csv export
         if features['exportCSV'][0]:
@@ -557,26 +534,8 @@ def analyze(filename, features):
             exportToCSV(emails)
             results['exportCSV'] = 'data/out.csv'
             t2 = time.time()
-            print("CSV Export", (t2-t1)/60)
+            print("CSV Export:", (t2-t1)/60)
     
     mt2 = time.time()
-    print((mt2-mt1)/60)
+    print("Total time (min):",(mt2-mt1)/60)
     return results
-    
-## RUN ANALYSIS
- 
-# features = {
-#     'labels': [True, "#f5f5f5"],
-#     'freqdist': [True, "#f5f5f5"],
-#     'netdiagram': [False, "#f5f5f5"],
-#     'summary': [False, "#f5f5f5"],
-#     'sentiment': [False, "#f5f5f5"],
-#     'exportCSV': [False, "#f5f5f5"]
-# }
-# 
-# analyze('data/emails.csv', features)
-
-"""
-Match image files:
-(\w+)\.(jpg|png|gif|pdf|docx)
-"""

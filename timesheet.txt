@@ -64,6 +64,8 @@ TIMESHEET
 - Added graphs for top labels and words
 - Implemented network diagram
 
-12/6/18: 4 hours
+12/6/18: 8 hours
 - Implemented error handling
 - Created materials for TP3 submission
+- Implemented basic network diagram for sender/receivers
+- Cleaned up code and finished commenting

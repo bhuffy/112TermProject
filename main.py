@@ -2,7 +2,7 @@
 
 """
 Author: Bennett Huffman
-Last Modified: 12/5/18
+Last Modified: 12/6/18
 Course: 15-112
 Section: H
 """
@@ -19,7 +19,6 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
 style.use("ggplot")
-# style.use('fivethirtyeight')
 
 #tkinter is the best graphics library change my mind
 from tkinter import filedialog
@@ -453,7 +452,7 @@ def featuresScreenRedrawAll(canvas, data):
         # feature3: network diagram
         canvas.create_rectangle(w1-20, startH*4-20, w1+20, startH*4+20,
                                 fill=data.features['netdiagram'][1], outline="")
-        canvas.create_text(w1 + 30, startH*4, text="Word Network Diagram",
+        canvas.create_text(w1 + 30, startH*4, text="Network Diagram",
                             font="Arial 16", fill=WHITE, anchor="w")
         
         # feature4: summarization
@@ -510,7 +509,7 @@ def analyzeScreenMousePressed(event, data):
     if data.features['freqdist'][0] and onFreqDistButton(data, event.x, event.y):
         a.plotFrequencyDist(data.results['freqdist'][1])
     if data.features['netdiagram'][0] and onNetDiagramButton(data, event.x, event.y):
-        messagebox.showinfo("NOTICE", "Feature under construction. Thank you for your patience.")
+        a.graphNetDiagram(data.results['netdiagram'])
     if data.features['summary'][0] and onSummarizationButton(data, event.x, event.y):
         messagebox.showinfo("NOTICE", "Summary Completed. View individual summaries in the CSV export of data located in the data/out.csv.")
     if data.features['sentiment'][0] and onSentimentButton(data, event.x, event.y):
@@ -732,20 +731,22 @@ def helpScreenTimerFired(data):
 def helpScreenRedrawAll(canvas, data):
     # background and screen title
     canvas.create_rectangle(0,0,data.width,data.height, fill=MAINBLUE, outline="")
+    drawEdges(data, canvas)
+    drawParticles(data, canvas)
     canvas.create_text(data.width/2, 40,
                        text="How to Use Labely", font="Arial 26 bold", fill=WHITE, anchor="n")
     
     instructions = ["Press start.",
                     "Click on 'upload' to select a csv file containing your email export from Gmail.",
-                    "Select the features you'd like to analyze. Note that some are only viewable in the CSV export.",
+                    "Select the features you'd like to analyze. Some features are only viewable in the CSV export.",
                     "Wait for the analysis to complete...",
                     "...and voila! See results and click on the buttons see visualizations!",
                     "Navigate visualizations with the tools in the bottom left corner.",
-                    "To find your CSV export, navigate to the data folder inside the project files and look for the file out.csv."]
+                    "To find your CSV export, navigate to the data folder inside the project files and look for 'out.csv'."]
     # print off instructions
     for i in range(len(instructions)):
-        canvas.create_text(data.width/10, data.height*1/5 + 50*i, text=str(i+1) + ". " + instructions[i],
-                                font="Arial 12", fill=WHITE, anchor = "nw")
+        canvas.create_text(data.width/12, data.height*1/5 + 50*i, text=str(i+1) + ". " + instructions[i],
+                                font="Arial 14", fill=WHITE, anchor = "nw")
                        
     # back to start button
     canvas.create_rectangle(data.width/2-90, data.height*11/12-30, data.width/2+90, data.height*11/12+30, fill=data.btnColor["bts"], outline="")
