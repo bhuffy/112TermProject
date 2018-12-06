@@ -16,7 +16,7 @@ TIMESHEET
 - Finished design proposal & storyboard
 
 11/20/18: 5 hours
-- Implemented start of basic k-means for labeling
+- Implemented start of basic k-means for labeling (redacted later)
 - Integrated part of sentiment analysis into main project
 
 11/25/18: 6 hours
@@ -43,9 +43,6 @@ TIMESHEET
 - Learning regular expressions
 - Implemented sentiment analysis visualization
 
-12/2/18: 0 hours
--None
-
 12/3/18: 8 hours
 -Filters phone numbers, emails, URLs
 -Exports phone numbers, emails
@@ -61,7 +58,12 @@ TIMESHEET
 - Implemented label export for individual emails
 - Created graph for labels
 
-12/5/18:
-- Implemented Naive Bayesian algorithm
+12/5/18: 14 hours
+- Implemented network UI, additional info, process screen
+- Updated help instructions
+- Added graphs for top labels and words
 - Implemented network diagram
 
+12/6/18: 4 hours
+- Implemented error handling
+- Created materials for TP3 submission

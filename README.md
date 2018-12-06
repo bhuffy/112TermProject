@@ -1,7 +1,6 @@
-# Labely - An email labeling and analysis tool for company complaints.
-## 15-112 Term Project, Carnegie Mellon University
+# Labely - 15-112 Term Project, Carnegie Mellon University
 
-Labely is an email labeling and analysis tool for company complaints that helps them better understand common themes in emails, including key words (labels), the most important content, sentiment, and interconnections.
+Labely is an email labeling and analysis tool for company complaints. This program helps business owners better understand common themes in emails, including key words (labels), important content, sentiment, and interconnections.
 
 * Author: Bennett Huffman
 * Mentor: Kusha Maharshi
@@ -17,12 +16,14 @@ Labely is an email labeling and analysis tool for company complaints that helps 
 * Pandas &rarr; `pip install pandas`
 
 ## Running Labely
-Downlaod the project as a ZIP file. Select an exported CSV file of the emails you want to analyze from Gmail (may require converting from MBOX to CSV) and place it in the 'data' folder. Sample CSV files of emails can be downloaded [here](https://drive.google.com/drive/folders/1UtdwyLho-S8gaU2K0bJ6m8TXxAeJbOSV?usp=sharing). Then run the "main.py" file and follow instructions.
+1. Download the project as a ZIP file.
+2. Select an exported CSV file of the emails you want to analyze from Gmail (may require converting from MBOX to CSV) and place it in the 'data' folder. Sample CSV files of emails can be downloaded [here](https://drive.google.com/drive/folders/1UtdwyLho-S8gaU2K0bJ6m8TXxAeJbOSV?usp=sharing).
+3. Run the "main.py" file to begin. Press help for instructions.
 
 ## Video
-[Check out this example!](https://youtube.com/)
+[Check out the demo!](https://youtube.com/)
 
-## Features
+## Features (toggle-able)
 * Email labeling and graphical visualization
 * Word frequency distribution and graphical visualization
 * Summarization of most important content in emails (only viewable in CSV export)

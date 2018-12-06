@@ -2,7 +2,7 @@
 
 """
 Author: Bennett Huffman
-Last Modified: 11/28/18
+Last Modified: 12/5/18
 Course: 15-112
 Section: H
 """
@@ -12,15 +12,14 @@ Section: H
 # csv handling
 import csv
 import pandas as pd
-import enchant
 
 # word processing
 import nltk
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.corpus import wordnet, stopwords
+import enchant
 import string
-# regular expressions
-import re
+import re # regular expressions
 
 # sentiment analysis
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -92,7 +91,7 @@ class Email(object):
 def createEmailList(path):
     emails = []
     # creates dictonary from values in each line of CSV
-    with open(path, mode='r') as csv_file:
+    with open(path, mode='r', encoding='utf-8-sig') as csv_file:
         csv_reader = csv.DictReader(csv_file)
         for row in csv_reader:
             emails.append(Email(row))
@@ -183,7 +182,7 @@ def synonymsInDocument(allWords, synonyms, word):
     documentSyns = set()
     for syn in synonyms:
         if syn != word and syn in allWords:
-            documentSyns.add(lem.name())
+            documentSyns.add(syn)
     return documentSyns
 
 # creates the 2 column dataframe mapping the connections
@@ -286,7 +285,6 @@ def summarizeDocuments(emails):
                     summary = sentence
                 elif sentenceValues[sentence] == maxValue:
                     summary += sentence
-        print(summary)
         email.setSummary(summary)
         
     
@@ -442,7 +440,6 @@ def labelEmails(emails, labels):
                 if any(word in email.body for word in labels[label][0]) or \
                     any(word in email.subject for word in labels[label][0]):
                         indivLabels.add(label)
-        print(indivLabels)
         email.setLabels(indivLabels)
 
 def prepLabelGraph(emails, topLabels):
@@ -470,44 +467,49 @@ def graphLabels(data):
 
 ## Analysis Controller
 
+def analyzeLabels(emails, words, results):
+    # Takes approx. 1 minute to tag all words; Nouns (NN) only
+    taggedWords = tagWords(words)
+    labelDist = createTagDist("NN", taggedWords)
+    
+    # labelDist should have frequency of nouns
+    labels = generateLabels(dict(labelDist))
+    
+    # CITATION: https://stackoverflow.com/questions/1747817/create-a-dictionary-with-list-comprehension-in-python
+    topLabelsDict = {key:labels[key] for key in list(labels.keys())[:20]}
+    
+    #label emails and get keys
+    labelEmails(emails, topLabelsDict)
+    topLabels = list(labels.keys())[:10] # top 15 labels
+    
+    # prepare data for graph
+    data = prepLabelGraph(emails, list(topLabelsDict.keys()))
+    results['labels'][1] = data
+    results['labels'][0] = topLabels
+    return results
+    
 def analyze(filename, features):
-    t1 = time.time()
-    results = {'labels': [], 'freqdist': [], 'netdiagram': None,
+    mt1 = time.time()
+    results = {'labels': [[], None], 'freqdist': [[], None], 'netdiagram': None,
                 'summary': None, 'sentiment': None, 'exportCSV': None
     }
     
     # get emails from csv and filter them if file exists
     if filename not in [None, ""]:
-        print("Processing emails...")
+        t1_1 = time.time()
         emails = createEmailList(filename)
         sentences = getAllSentences(emails)
         words = filterWords(getAllWords(sentences))
         uniqueWords = set(words)
         wordDist = nltk.FreqDist(words)
+        t2_1 = time.time()
+        print("Initial processing:",(t2_1-t1_1)/60)
         
         # labeling
         if features['labels'][0]:
             print("Generate labels!")
             t1 = time.time()
-            
-            # Takes approx. 1 minute to tag all words; Noun (NN), Adverb(RB), Verb (VB), JJ (Adjective)
-            taggedWords = tagWords(words)
-            labelDist = createTagDist("NN", taggedWords)
-            
-            # labelDist should have frequency of nouns, adjectives, adverbs, verbs
-            labels = generateLabels(dict(labelDist))
-            # CITATION: https://stackoverflow.com/questions/1747817/create-a-dictionary-with-list-comprehension-in-python
-            topLabelsDict = {key:labels[key] for key in list(labels.keys())[:20]}
-            print(topLabelsDict)
-            
-            #label emails and get keys
-            labelEmails(emails, topLabelsDict)
-            topLabels = list(labels.keys())[:15] # top 15 labels
-            
-            # prepare data for graph
-            data = prepLabelGraph(emails, list(topLabelsDict.keys()))
-            graphLabels(data)
-            results['labels'] = topLabels
+            results = analyzeLabels(emails, words, results)
             t2 = time.time()
             print("Labels", (t2-t1)/60)
         
@@ -515,20 +517,21 @@ def analyze(filename, features):
         if features['freqdist'][0]:
             print("Generate frequency distribution!")
             t1 = time.time()
-            results['freqdist'] = wordDist.most_common(15)
+            results['freqdist'][0] = wordDist.most_common(10)
+            results['freqdist'][1] = wordDist
             t2 = time.time()
             print("Freq Dist", (t2-t1)/60)
         
         # network diagram
         if features['netdiagram'][0]:
-            # synonym mapping: 12.5 minutes!!
+            print("Generate network diagram...")
+            # synonym mapping: 32.7 minutes!!
             synConnections = createSynDictionary(words, uniqueWords)
-            print(synConnections)
             # TODO: create diagram from pandas df
             # netdf = createNetworkDF(synConnections)
             # createNetDiagram(netdf)
             results['netdiagram'] = wordDist
-            
+    
         # summarization
         if features['summary'][0]:
             print("Summarize documents!")
@@ -556,16 +559,16 @@ def analyze(filename, features):
             t2 = time.time()
             print("CSV Export", (t2-t1)/60)
     
-    t2 = time.time()
-    print((t2-t1)/60, results)
+    mt2 = time.time()
+    print((mt2-mt1)/60)
     return results
     
 ## RUN ANALYSIS
-
+ 
 # features = {
-#     'labels': [False, "#f5f5f5"],
-#     'freqdist': [False, "#f5f5f5"],
-#     'netdiagram': [True, "#f5f5f5"],
+#     'labels': [True, "#f5f5f5"],
+#     'freqdist': [True, "#f5f5f5"],
+#     'netdiagram': [False, "#f5f5f5"],
 #     'summary': [False, "#f5f5f5"],
 #     'sentiment': [False, "#f5f5f5"],
 #     'exportCSV': [False, "#f5f5f5"]
