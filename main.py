@@ -572,7 +572,8 @@ def analyzeScreenKeyPressed(event, data):
     pass
     
 def analyzeScreenTimerFired(data):
-    pass
+    if data.analysisInProgress:
+        data.analysisInProgress = False
 
 def analyzeScreenRedrawAll(canvas, data):
     # background and screen title
